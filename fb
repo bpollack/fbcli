@@ -1,0 +1,36 @@
+#!/usr/bin/env python
+
+import os
+import sys
+
+import getopt
+
+from fogbugz import FogBugz
+from ConfigParser import ConfigParser
+
+config = ConfigParser()
+config.read(os.path.expanduser('~/.fbcli'))
+
+def newcase(f, args):
+	if args[0] == 'web':
+		areaid = 133
+	elif args[0] == 'mac':
+		areaid = 184
+	elif args[0] == 'win':
+		areaid = 132
+	else:
+		print "Huh?"
+		return
+	
+	f.new(ixProject=30, ixArea=areaid, sTitle=args[1])
+
+if __name__ == "__main__":
+	f = FogBugz(config.get('fogbugz', 'url'))
+	f.logon(config.get('fogbugz', 'username'), config.get('fogbugz', 'password'))
+	
+	if sys.argv[1] == 'nc':
+		newcase(f, sys.argv[2:])
+	else:
+		print 'Not yet implemented'
+	
+	f.logoff()
