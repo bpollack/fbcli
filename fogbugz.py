@@ -50,6 +50,10 @@ class FogBugz:
         """
         self.__makerequest('logoff')
         self._token = None
+    
+    @property
+    def token(self):
+        return self._token
 
     def __makerequest(self, cmd, **kwargs):
         kwargs["cmd"] = cmd
