@@ -13,12 +13,12 @@ class FogBugzConnectionError(FogBugzAPIError):
     pass
 
 class FogBugz:
-    def __init__(self, url):
+    def __init__(self, url, token=None):
         self.__handlerCache = {}
         if not url.endswith('/'):
             url += '/'
 
-        self._token = None
+        self._token = token
         self._opener = urllib2.build_opener()
         try:
             soup = BeautifulSoup(self._opener.open(url + 'api.xml'))
