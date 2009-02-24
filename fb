@@ -1,36 +1,130 @@
 #!/usr/bin/env python
 
+from __future__ import with_statement
+
 import os
 import sys
-
-import getopt
+import getpass
 
 from fogbugz import FogBugz
 from ConfigParser import ConfigParser
 
-config = ConfigParser()
-config.read(os.path.expanduser('~/.fbcli'))
+FBCLI_SETTINGS_PATH = os.path.expanduser(os.path.join('~', '.fbcli'))
 
-def newcase(f, args):
-	if args[0] == 'web':
-		areaid = 133
-	elif args[0] == 'mac':
-		areaid = 184
-	elif args[0] == 'win':
-		areaid = 132
-	else:
-		print "Huh?"
-		return
-	
-	f.new(ixProject=30, ixArea=areaid, sTitle=args[1])
+config = ConfigParser()
+config.read(FBCLI_SETTINGS_PATH)
+
+def save_config(f):
+    'Make the provided function always save the configuration file'
+    def wrapper(*args):
+        f(*args)
+        with open(FBCLI_SETTINGS_PATH, 'w') as configfile:
+            config.write(configfile)
+    return wrapper
+
+def fb(login=None, password=None):
+    'Return an as-initialized-as-can-be FogBugz object'
+    active = config.get('fogbugz', 'active')
+    url = config.get('urls', active)
+    if not login:
+        token = config.get('tokens', active)
+        return FogBugz(url, token=token)
+    else:
+        f = FogBugz(url)
+        f.logon(login, password)
+        return f
+
+def active(args):
+    alias = config.get('fogbugz', 'active')
+    url = config.get('urls', alias)
+    print '%s (%s)' % (alias, url)
+
+@save_config
+def add(args):
+    'Add a new FogBugz install to the list of known installs'
+    if not config.has_section('urls'):
+        config.add_section('urls')
+    if not config.has_section('fogbugz'):
+        config.add_section('fogbugz')
+    alias = sys.argv[2]
+    url = sys.argv[3]
+    config.set('urls', alias, url)
+    config.set('fogbugz', 'active', alias)
+
+@save_config
+def login(args):
+    'Log on with the credentials provided and save the token for later use'
+    print "Email: ",
+    email = sys.stdin.readline().strip()
+    password = getpass.getpass()
+    
+    f = fb(email, password)
+    if not config.has_section('tokens'):
+        config.add_section('tokens')
+    config.set('tokens', config.get('fogbugz', 'active'), f.token)
+
+@save_config
+def logout(args):
+    'Log off and clear the token for the active server'
+    fb().logoff()
+    config.remove_option('tokens', config.get('fogbugz', 'active'))
+
+def newcase(args):
+    pass
+
+def remove(args):
+    pass
+
+def show(args):
+    def areas(args):
+        areas = fb().listAreas()
+        for area in areas.findAll('area'):
+            print '%s: %s' % (area.ixarea.contents[0], area.sarea.contents[0])
+    
+    def filters(args):
+        filters = fb().listFilters()
+        for filter in filters.findAll('filter'):
+            print '%s: %s' % (filter['sfilter'], filter.contents[0])
+    
+    def projects(args):
+        projects = fb().listProjects()
+        for project in projects.findAll('project'):
+            print '%s: %s' % (project.ixproject.contents[0], project.sproject.contents[0])
+    
+    def servers(args):
+        for key, val in config.items('urls'):
+            print '%s = %s' % (key, val)
+    
+    lists = {
+              'areas': areas,
+              'filters': filters,
+              'projects': projects,
+              'servers': servers,
+            }
+    lists[args[0]](args[1:])
+            
+    
+@save_config
+def switch(args):
+    'Switch to the requested FogBugz server'
+    alias = args[0]
+    if not config.has_option('urls', alias):
+        print 'not a known FogBugz server alias'
+    else:
+        config.set('fogbugz', 'active', alias)
+    
+
+commands = {
+             'active': active,
+             'add': add,
+             'list': show,
+             'login': login,
+             'logout': logout,
+             'nc': newcase,
+             'newcase': newcase,
+             'remove': remove,
+             'switch': switch,
+           }
 
 if __name__ == "__main__":
-	f = FogBugz(config.get('fogbugz', 'url'))
-	f.logon(config.get('fogbugz', 'username'), config.get('fogbugz', 'password'))
-	
-	if sys.argv[1] == 'nc':
-		newcase(f, sys.argv[2:])
-	else:
-		print 'Not yet implemented'
-	
-	f.logoff()
+    commands[sys.argv[1]](sys.argv[2:])
