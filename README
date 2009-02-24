@@ -1,0 +1,5 @@
+fb is a simple FogBugz command-line client.  Ultimately, it should make using
+FogBugz from the command line as pleasant as using it from the website.
+Currently, it fails so spectacularly that small animals flee in terror.
+
+Patches welcome.
