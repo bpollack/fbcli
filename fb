@@ -127,6 +127,7 @@ def switch(args):
     
 def usage(main, commands):
     width = max(map(len, commands.keys())) + 2
+    print "FogBugz Command Line Client"
     print
     print '%s commands:' % (main,)
     print
@@ -134,8 +135,13 @@ def usage(main, commands):
         print ' %s%s' % (key.ljust(width), commands[key][1])
     print
 
-def dispatch(main, commands, args):
-    if len(args) > 0 and commands.has_key(args[0]):
+def dispatch(main, commands, args, default = None):
+    if len(args) == 0:
+        if default:
+            default()
+        else:
+            usage(main, commands)
+    elif commands.has_key(args[0]):
         commands[args[0]][0](args[1:])
     else:
         usage(main, commands)
@@ -153,5 +159,5 @@ commands = {
            }
 
 if __name__ == "__main__":
-    dispatch('fb', commands, sys.argv[1:])
+    dispatch('basic', commands, sys.argv[1:])
 
