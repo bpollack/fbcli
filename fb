@@ -27,15 +27,24 @@ def save_config(f):
 
 def fb(login=None, password=None):
     'Return an as-initialized-as-can-be FogBugz object'
-    active = config.get('fogbugz', 'active')
-    url = config.get('urls', active)
-    if not login:
-        token = config.get('tokens', active)
-        return FogBugz(url, token=token)
+    if config.has_section('fogbugz'):
+        active = config.get('fogbugz', 'active')
+        url = config.get('urls', active)
+
+        if not login:
+            token = config.get('tokens', active)
+            return FogBugz(url, token=token)
+        else:
+            f = FogBugz(url)
+            f.logon(login, password)
+            return f
     else:
-        f = FogBugz(url)
-        f.logon(login, password)
-        return f
+        print 'FogBugz URL: ',
+        url = sys.stdin.readline().strip()
+        print 'Alias: ',
+        alias = sys.stdin.readline().strip()
+        add([alias, url])
+        return fb(login, password)
 
 def active(args):
     alias = config.get('fogbugz', 'active')
