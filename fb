@@ -58,8 +58,8 @@ def add(args):
         config.add_section('urls')
     if not config.has_section('fogbugz'):
         config.add_section('fogbugz')
-    alias = sys.argv[2]
-    url = sys.argv[3]
+    alias = args[0]
+    url = args[1]
     config.set('urls', alias, url)
     config.set('fogbugz', 'active', alias)
 
@@ -108,13 +108,13 @@ def show(args):
             print '%s = %s' % (key, val)
     
     lists = {
-              'areas': areas,
-              'filters': filters,
-              'projects': projects,
-              'servers': servers,
+              'areas': (areas, 'List areas in the current FogBugz instance'),
+              'filters': (filters, 'List filters in the current FogBugz instance'),
+              'projects': (projects, 'List projects in the current FogBugz instance'),
+              'servers': (servers, 'List servers in the current FogBugz instance'),
             }
-    lists[args[0]](args[1:])
-            
+
+    dispatch('list', lists, args[1:])
     
 @save_config
 def switch(args):
@@ -125,18 +125,33 @@ def switch(args):
     else:
         config.set('fogbugz', 'active', alias)
     
+def usage(main, commands):
+    width = max(map(len, commands.keys())) + 2
+    print
+    print '%s commands:' % (main,)
+    print
+    for key in commands.keys():
+        print ' %s%s' % (key.ljust(width), commands[key][1])
+    print
 
+def dispatch(main, commands, args):
+    if len(args) > 0 and commands.has_key(args[0]):
+        commands[args[0]][0](args[1:])
+    else:
+        usage(main, commands)
+    
 commands = {
-             'active': active,
-             'add': add,
-             'list': show,
-             'login': login,
-             'logout': logout,
-             'nc': newcase,
-             'newcase': newcase,
-             'remove': remove,
-             'switch': switch,
+             'active': (active, 'Display which FogBugz instance is active'),
+             'add': (add, 'Add a new FogBugz instance to your config'),
+             'list': (show, 'List various things in FogBugz'),
+             'login': (login, 'Log in to the current FogBugz instance'),
+             'logout': (logout, 'Log out of the current FogBugz instance'),
+             'nc': (newcase, 'Add a new case to FogBugz'), # Move this to an alias list
+             'newcase': (newcase, 'Add a new case to FogBugz'),
+             'remove': (remove, 'Remove a FogBugz instance'),
+             'switch': (switch, 'Switch the active FogBugz instance'),
            }
 
 if __name__ == "__main__":
-    commands[sys.argv[1]](sys.argv[2:])
+    dispatch('fb', commands, sys.argv[1:])
+
