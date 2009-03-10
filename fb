@@ -126,13 +126,13 @@ def switch(args):
         config.set('fogbugz', 'active', alias)
     
 def usage(main, commands):
-    width = max(map(len, commands.keys())) + 2
+    width = max(map(len, commands.keys()))
     print "FogBugz Command Line Client"
     print
     print '%s commands:' % (main,)
     print
     for key in commands.keys():
-        print ' %s%s' % (key.ljust(width), commands[key][1])
+        print ' %s  %s' % (key.ljust(width), commands[key][1])
     print
 
 def dispatch(main, commands, args, default = None):
