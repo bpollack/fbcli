@@ -9,7 +9,10 @@ import getpass
 from fogbugz import FogBugz
 from ConfigParser import ConfigParser
 
-FBCLI_SETTINGS_PATH = os.path.expanduser(os.path.join('~', '.fbcli'))
+if os.name == 'nt':
+    FBCLI_SETTINGS_PATH = os.path.expanduser(os.path.join('~', 'fbcli.ini'))
+else:
+    FBCLI_SETTINGS_PATH = os.path.expanduser(os.path.join('~', '.fbcli'))
 
 config = ConfigParser()
 config.read(FBCLI_SETTINGS_PATH)
